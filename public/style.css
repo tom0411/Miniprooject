@@ -1,0 +1,8 @@
+body {
+    margin: 1rem
+}
+ul {
+    padding: 0;
+    list-style: none; /* Optional: Remove default list styles */
+    margin-top:1rem ;
+}
