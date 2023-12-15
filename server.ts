@@ -1,9 +1,8 @@
 // server.ts
 import express from "express";
 import { env } from "./env";
-import bodyParser from "body-parser";
 import { client } from "./db";
-import { log } from "console";
+
 
 const app = express();
 

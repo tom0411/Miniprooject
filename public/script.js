@@ -1,81 +1,103 @@
-async function postItem(inputValue){
-  let result=await fetch("/item",{
-  method:"POST",
-  headers:{"Content-type": "application/json"},
-  body:JSON.stringify({title:inputValue})})  
-  // await result.json()
+// Function to create a new item
+async function postItem(inputValue) {
+  let result = await fetch("/item", {
+    method: "POST",
+    headers: { "Content-type": "application/json" },
+    body: JSON.stringify({ title: inputValue })
+  });
+
+  // Handle the response if needed
 }
 
-let addButton = document.getElementById('saveButton');
-let myList = document.getElementById('eventlist');
+// Function to delete an item
+async function deleteItem(id) {
+  let result = await fetch(`/item?id=${id}`, {
+    method: "DELETE"
+  });
 
-addButton.addEventListener('click', function() {
+  // Handle the response if needed
+}
 
-  let inputText = document.getElementById('enterframe').value;
-  postItem(inputText)
+// Function to update an item
+async function updateItem(id, newValue) {
+  let result = await fetch(`/item?id=${id}`, {
+    method: "PUT",  // Assuming "PUT" is used to update an existing item
+    headers: {
+      "Content-type": "application/json"
+    },
+    body: JSON.stringify({ title: newValue })
+  });
 
-  getItems()
+  // Handle the response if needed
+}
 
+document.addEventListener('DOMContentLoaded', function() {
+  // Get the "Save" button
+  let addButton = document.getElementById('saveButton');
+  let myList = document.getElementById('eventlist');
 
-  
-});
+  addButton.addEventListener('click', function() {
+    let inputText = document.getElementById('enterframe').value;
+    postItem(inputText);
+    getItems();
+  });
 
-async function getItems(){
-  let result=await fetch("/item")
-  let items=await result.json()
-  myList.innerHTML=``
-for(let item of items){
+  // Function to retrieve items from the server
+  async function getItems() {
+    let result = await fetch("/item");
+    let items = await result.json();
 
-  if (item.title) {
-    console.log("loop items");
-    let newItem = document.createElement('ul'); // Create a new list item
-    let itemText = document.createTextNode(item.title); // Create a text node with the input text
+    myList.innerHTML = '';
 
-    let newButton = document.createElement('button'); // Create a new button
-    newButton.classList.add('btn', 'btn-primary');
-    newButton.textContent = 'Delete'; // Set the text content of the button
-    newButton.addEventListener('click', function() {
-      deleteItem(item.id)
-      getItems()
-    });
+    for (let item of items) {
+      if (item.title) {
+        let newItem = document.createElement('ul');
+        let itemText = document.createTextNode(item.title);
 
-    let checkbox = document.createElement('input'); // Create a new checkbox
-    checkbox.type = 'checkbox';
+        let deleteButton = document.createElement('button');
+        deleteButton.classList.add('btn', 'btn-primary');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', function() {
+          deleteItem(item.id);
+          getItems();
+        });
 
-    // Declare inputField outside of the event listener to make it accessible in both if and else blocks
-    let inputField = document.createElement('input');
-    inputField.classList.add('inputarea');
-    inputField.type = 'text';
+        let checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
 
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        inputField.value = itemText.data; // Set the value of the input field
-        newItem.replaceChild(inputField, itemText); // Replace the text node with the input field
-      } else {
-        itemText.data = inputField.value; // Update the text node with the input field's current value
-        newItem.replaceChild(itemText, inputField); // Replace the input field with the text node
+        let inputField = document.createElement('input');
+        inputField.classList.add('inputarea');
+        inputField.type = 'text';
+
+        let saveButton = document.createElement('button');
+        saveButton.classList.add('btn', 'btn-primary');
+        saveButton.textContent = 'Save';
+
+        checkbox.addEventListener('change', function() {
+          if (this.checked) {
+            inputField.value = itemText.data;
+            newItem.replaceChild(inputField, itemText);
+            newItem.insertBefore(saveButton, deleteButton);// Append the "Save" button when the checkbox is checked
+          } else {
+            itemText.data = inputField.value;
+            newItem.replaceChild(itemText, inputField);
+            newItem.removeChild(saveButton); // Remove the "Save" button when the checkbox is unchecked
+          }
+        });
+
+        // Add a click event listener to the "Save" button
+        saveButton.addEventListener('click', async function() {
+
+        });
+
+        newItem.appendChild(checkbox);
+        newItem.appendChild(itemText);
+        newItem.appendChild(deleteButton);
+        myList.appendChild(newItem);
+        document.getElementById('enterframe').value = '';
       }
-    });
-    newItem.appendChild(checkbox);    // Append the checkbox to the new list item
-    newItem.appendChild(itemText); // Append the text node to the new list item
-    newItem.appendChild(newButton); // Append the "Delete" button to the new list item
-
-    myList.appendChild(newItem); // Append the new list item to the existing list
-    document.getElementById('enterframe').value = ''; // Clear the input field
+    }
   }
-  
-}
 
-
-}
-getItems()
-
-
-
-
-
-async function deleteItem(id){
-  let result=await fetch(`/item?id=${id}`,{
-  method:"Delete"})  
-  // await result.json()
-}
+  getItems();
+});
