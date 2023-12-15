@@ -26,7 +26,7 @@ app.get("/item", async (req, res) => {
 app.post("/item", async (req, res) => {
   try {
     let { title } = req.body;
-    await client.query(`INSERT INTO item (tittle) VALUES ($1)`, [title]);
+    await client.query(`INSERT INTO item (title) VALUES ($1)`, [title]);
 
     res.json({});
   } catch (err) {
@@ -47,7 +47,20 @@ app.patch("/item",async (req, res) => {
 });
 
 
-app.delete("/item");
+app.delete("/item", async (req, res) => {
+  try {
+ 
+    console.log(req.query);
+    
+    let { id} = req.query
+    await client.query('DELETE FROM item WHERE id = $1', [id]);
+    res.json({ message: "Row deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Start the server
 app.listen(env.PORT, () => {
   console.log(`http://localhost:${env.PORT}/`);
