@@ -24,6 +24,7 @@ app.get("/item", async (req, res) => {
 
 app.post("/item", async (req, res) => {
   try {
+    console.log("post item");
     let { title } = req.body;
     await client.query(`INSERT INTO item (title) VALUES ($1)`, [title]);
 
@@ -34,14 +35,17 @@ app.post("/item", async (req, res) => {
   }
 });
 
-
-app.patch("/item",async (req, res) => {
+app.put("/item", async (req, res) => {
   try {
-   
-    res.json({});
+
+    
+    let { id, title } = req.body; // Use `id` and `title` here
+    await client.query('UPDATE item SET title = $1 WHERE id = $2', [title, id]);
+    console.log("Backend response: item updated"); // Corrected console.log statement
+    res.status(200).json({}); // Send the response
   } catch (err) {
-    console.log(err);
-    res.json({ err: "internal server error" });
+    console.error(err);
+    res.status(500).json({ err: "internal server error" });
   }
 });
 
@@ -51,7 +55,7 @@ app.delete("/item", async (req, res) => {
  
     console.log(req.query);
     
-    let { id} = req.query
+    let {id} = req.query
     await client.query('DELETE FROM item WHERE id = $1', [id]);
     res.json({ message: "Row deleted successfully" });
   } catch (err) {
