@@ -1,11 +1,16 @@
-
 // Function to delete an item
 async function deleteItem(id) {
-  let result = await fetch(`/item?id=${id}`, {
-    method: "DELETE"
-  });
-
-  // Handle the response if needed
+  try {
+    let result = await fetch(`/item?id=${id}`, {
+      method: "DELETE"
+    });
+    if (!result.ok) {
+      throw new Error(`Failed to delete item with ID: ${id}`);
+    }
+    console.log("Item deleted successfully");
+  } catch (error) {
+    console.error("Error deleting item:", error);
+  }
 }
 
 // Function to update an item
@@ -23,68 +28,87 @@ async function updateItem(id, title) {
       throw new Error(`HTTP error: ${response.status}`);
     }
 
-    // Assuming the response is JSON, parse it
     let result = await response.json();
     console.log('Update successful:', result);
   } catch (error) {
     console.error('Error during updateItem:', error);
   }
 }
-// Adjust the event listener for the save button to match the correct input field ID
-let postButton = document.getElementById('saveButton');
-let  inputArea = document.getElementById('enterframe');
-
-postButton.addEventListener('click',  function() {
-
-  let  title = inputArea.value;
-  console.log({title});
-postItem(title)
-getItems()
-
-});
-
-
-
 
 // Function to create a new item
 async function postItem(inputValue) {
-  let result = await fetch("/item", {
-    method: "POST",
-    headers: { "Content-type": "application/json" },
-    body: JSON.stringify({ title: inputValue })
-  });
+  try {
+    let result = await fetch("/item", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify({ title: inputValue })
+    });
 
-  // Handle the response if needed
+    if (!result.ok) {
+      throw new Error(`Failed to post item: ${inputValue}`);
+    }
+    console.log("Item posted successfully");
+  } catch (error) {
+    console.error("Error posting item:", error);
+  }
 }
 
-  // Get the "Save" button
-  // let addButton = document.getElementById('saveButton');
-  let myList = document.getElementById('eventlist');
+async function clearItem() {
+  try {
+    let result = await fetch("/item", {
+      method: "DELETE",
+      headers: { "Content-type": "application/json" },
+    });
 
-  // addButton.addEventListener('click', function() {
-  //   let inputText = document.getElementById('enterframe').value;
-  //   postItem(inputText);
-  //   getItems();
-  // });
+    if (!result.ok) {
+      throw new Error(`Failed to delete items`);
+    }
+    console.log("All items deleted successfully");
+  } catch (error) {
+    console.error("Error clearing items:", error);
+  }
+}
 
-  // Function to retrieve items from the server
-  async function getItems() {
+// Event listener for the save button
+let saveButton = document.getElementById('saveButton');
+saveButton.addEventListener('click', async function() {
+  let title = document.getElementById('enterframe').value;
+  if (title === '') {
+    alert('Please enter something to do!');
+  } else {
+    await postItem(title);
+    await getItems();
+  }
+});
+
+// Event listener for the clear button
+let clearButton = document.getElementById('clearButton');
+clearButton.addEventListener('click', async function() {
+  if (confirm('Are you sure you want to delete all items?')) {
+    let myList = document.getElementById('eventlist');
+    myList.innerHTML = '';
+    await clearItem();
+  }
+});
+// Function to retrieve items from the server
+async function getItems() {
+  try {
     let result = await fetch("/item");
     let items = await result.json();
-
+    let myList = document.getElementById('eventlist');
     myList.innerHTML = '';
 
     for (let item of items) {
       if (item.title) {
         let newItem = document.createElement('ul');
         let itemText = document.createTextNode(item.title);
-
+  
         let deleteButton = document.createElement('button');
         deleteButton.classList.add('btn', 'btn-primary');
         deleteButton.textContent = 'Delete';
-        deleteButton.addEventListener('click', function() {
-          deleteItem(item.id);
-          getItems();
+        deleteButton.addEventListener('click', async function() {
+          await deleteItem(item.id);
+          await getItems();
         });
 
         let checkbox = document.createElement('input');
@@ -98,30 +122,24 @@ async function postItem(inputValue) {
         saveButton.classList.add('btn', 'btn-primary',"saveBtn");
         saveButton.textContent = 'Save';
 
-
         checkbox.addEventListener('change', function() {
           if (this.checked) {  
             inputField.value = itemText.data;
             newItem.replaceChild(inputField, itemText);
-
-            newItem.insertBefore(saveButton, deleteButton);// Append the "Save" button when the checkbox is checked
-            
-            
-        saveButton.addEventListener("click",(event)=>{
-          let id=item.id
-          let title=inputField.value
-          updateItem(id,title)
-          getItems()
-    
-
-        })
+            newItem.insertBefore(saveButton, deleteButton);
+            saveButton.addEventListener("click", async () => {
+              let id = item.id;
+              let title = inputField.value;
+              await updateItem(id, title);
+              await getItems();
+            });
           } else {
             itemText.data = inputField.value;
             newItem.replaceChild(itemText, inputField);
-            newItem.removeChild(saveButton); // Remove the "Save" button when the checkbox is unchecked
+            newItem.removeChild(saveButton);
           }
-        });
 
+        });
 
         newItem.appendChild(checkbox);
         newItem.appendChild(itemText);
@@ -130,6 +148,10 @@ async function postItem(inputValue) {
         document.getElementById('enterframe').value = '';
       }
     }
+  } catch (error) {
+    console.error('Error getting items:', error);
   }
-  
-  getItems();
+}
+
+// Initial call to retrieve items
+getItems();

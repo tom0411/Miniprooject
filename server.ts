@@ -1,4 +1,4 @@
-// server.ts
+32// server.ts
 import express from "express";
 import { env } from "./env";
 import { client } from "./db";
@@ -50,19 +50,31 @@ app.put("/item", async (req, res) => {
 });
 
 
-app.delete("/item", async (req, res) => {
+// Delete a specific item by ID
+app.delete("/item/:id", async (req, res) => {
   try {
- 
-    console.log(req.query);
-    
-    let {id} = req.query
+    const { id } = req.params;
     await client.query('DELETE FROM item WHERE id = $1', [id]);
-    res.json({ message: "Row deleted successfully" });
+    res.json({ message: "Item deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// Delete all items
+app.delete("/item", async (req, res) => {
+  try {
+    console.log("clear item");
+    await client.query('DELETE FROM item');
+    res.json({ message: "All items deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 
 // Start the server
 app.listen(env.PORT, () => {
