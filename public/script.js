@@ -1,27 +1,30 @@
 // Function to delete an item
 async function deleteItem(id) {
   try {
-    let result = await fetch(`/item?id=${id}`, {
+    let response = await fetch(`/item/${id}`, { // Correctly include the ID in the URL path
       method: "DELETE"
     });
-    if (!result.ok) {
-      throw new Error(`Failed to delete item with ID: ${id}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
     }
-    console.log("Item deleted successfully");
+
+    let result = await response.json();
+    console.log('Item deleted successfully:', result);
   } catch (error) {
-    console.error("Error deleting item:", error);
+    console.error('Error during deleteItem:', error);
   }
 }
-
+  
 // Function to update an item
 async function updateItem(id, title) {
   try {
-    let response = await fetch(`/item`, {
+    let response = await fetch(`/item/${id}`, { // Include ID in the URL path
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ id: id, title: title })
+      body: JSON.stringify({ title: title }) // Only send the title in the body
     });
 
     if (!response.ok) {
@@ -34,6 +37,8 @@ async function updateItem(id, title) {
     console.error('Error during updateItem:', error);
   }
 }
+
+
 
 // Function to create a new item
 async function postItem(inputValue) {
@@ -53,21 +58,23 @@ async function postItem(inputValue) {
   }
 }
 
-async function clearItem() {
+async function clearItems() {
   try {
-    let result = await fetch("/item", {
+    let response = await fetch("/item", {
       method: "DELETE",
-      headers: { "Content-type": "application/json" },
+      headers: { "Content-type": "application/json" }
     });
 
-    if (!result.ok) {
+    if (!response.ok) {
       throw new Error(`Failed to delete items`);
     }
+
     console.log("All items deleted successfully");
   } catch (error) {
     console.error("Error clearing items:", error);
   }
 }
+
 
 // Event listener for the save button
 let saveButton = document.getElementById('saveButton');
@@ -87,7 +94,7 @@ clearButton.addEventListener('click', async function() {
   if (confirm('Are you sure you want to delete all items?')) {
     let myList = document.getElementById('eventlist');
     myList.innerHTML = '';
-    await clearItem();
+    await clearItems();
   }
 });
 // Function to retrieve items from the server
@@ -120,7 +127,7 @@ async function getItems() {
 
         let saveButton = document.createElement('button');
         saveButton.classList.add('btn', 'btn-primary',"saveBtn");
-        saveButton.textContent = 'Save';
+        saveButton.textContent = 'Save ';
 
         checkbox.addEventListener('change', function() {
           if (this.checked) {  

@@ -1,4 +1,4 @@
-32// server.ts
+
 import express from "express";
 import { env } from "./env";
 import { client } from "./db";
@@ -14,13 +14,14 @@ app.use(express.static("protected"));
 
 app.get("/item", async (req, res) => {
   try {
-    let data = (await client.query(` select * from item`)).rows;
-    res.json(data);
+    let data = await client.query('SELECT * FROM item ORDER BY id'); // Order by ID
+    res.json(data.rows);
   } catch (err) {
     console.log(err);
     res.json({ err: "internal server error" });
   }
 });
+
 
 app.post("/item", async (req, res) => {
   try {
@@ -35,35 +36,50 @@ app.post("/item", async (req, res) => {
   }
 });
 
-app.put("/item", async (req, res) => {
+app.put("/item/:id", async (req, res) => {
   try {
+    const { id } = req.params;
+    const { title } = req.body;
 
-    
-    let { id, title } = req.body; // Use `id` and `title` here
     await client.query('UPDATE item SET title = $1 WHERE id = $2', [title, id]);
-    console.log("Backend response: item updated"); // Corrected console.log statement
-    res.status(200).json({}); // Send the response
+
+    console.log("Backend response: item updated");
+    console.log('ID:', id);
+    console.log('Title:', title);
+
+    res.status(200).json({}); // Sending the response
   } catch (err) {
     console.error(err);
-    res.status(500).json({ err: "internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 
-app.delete("/item", async (req, res) => {
+
+app.delete("/item/:id", async (req, res) => {
   try {
-    const { id } = req.query;
+    const { id } = req.params; // Corrected to use params
     if (id) {
-      // If id is provided in query params, delete the item with that id
+      // If id is provided in path parameters, delete the item with that id
       await client.query('DELETE FROM item WHERE id = $1', [id]);
-      console.log(`Item with ID ${id} deleted successfully`); // Corrected console.log statement
+      console.log(`Item with ID ${id} deleted successfully`);
       res.json({ message: `Item with ID ${id} deleted successfully` });
     } else {
-      // Otherwise, delete all items and reset ID
-      await client.query('TRUNCATE TABLE item RESTART IDENTITY');
-      console.log("All items deleted successfully and ID reset"); // Corrected console.log statement
-      res.json({ message: "All items deleted successfully and ID reset" });
+      // This else block might never be reached since id is expected in the route
+      // Consider removing or handling differently if you intend to delete all without an id
     }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.delete("/item", async (req, res) => {
+  try {
+    // Deletes all items
+    await client.query('DELETE FROM item');
+    console.log("All items deleted successfully");
+    res.json({ message: "All items deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
