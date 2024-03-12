@@ -50,31 +50,25 @@ app.put("/item", async (req, res) => {
 });
 
 
-// Delete a specific item by ID
-app.delete("/item/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await client.query('DELETE FROM item WHERE id = $1', [id]);
-    res.json({ message: "Item deleted successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Delete all items
 app.delete("/item", async (req, res) => {
   try {
-    console.log("clear item");
-    await client.query('DELETE FROM item');
-    res.json({ message: "All items deleted successfully" });
+    const { id } = req.query;
+    if (id) {
+      // If id is provided in query params, delete the item with that id
+      await client.query('DELETE FROM item WHERE id = $1', [id]);
+      console.log(`Item with ID ${id} deleted successfully`); // Corrected console.log statement
+      res.json({ message: `Item with ID ${id} deleted successfully` });
+    } else {
+      // Otherwise, delete all items and reset ID
+      await client.query('TRUNCATE TABLE item RESTART IDENTITY');
+      console.log("All items deleted successfully and ID reset"); // Corrected console.log statement
+      res.json({ message: "All items deleted successfully and ID reset" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-
 
 // Start the server
 app.listen(env.PORT, () => {
